@@ -112,6 +112,39 @@
     .text-card { width:min(94vw, 94vw); }
     .body { font-size: clamp(18px, 2.15vw, 26px); line-height:1.95; }
   }
+
+  /* Full-viewport photo interludes, preserving the whole portrait. */
+  .full-photo-slide {
+    padding: 0;
+    background: #080706;
+    overflow: hidden;
+  }
+  .full-photo-slide::before { display: none; }
+  .full-photo-backdrop {
+    position: absolute;
+    inset: -8%;
+    width: 116%;
+    height: 116%;
+    object-fit: cover;
+    filter: blur(46px) brightness(.31) saturate(.75);
+    transform: scale(1.05);
+  }
+  .full-photo-slide::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,.16), transparent 25%, transparent 75%, rgba(0,0,0,.16));
+    pointer-events: none;
+  }
+  .full-photo-image {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    filter: drop-shadow(0 0 28px rgba(0,0,0,.5));
+  }
 </style>
 </head>
 <body>
@@ -205,6 +238,31 @@
 <div class="progress" id="progress"></div>
 <script>
 (() => {
+  // Insert a full-screen photo after EVERY existing photo or tribute slide.
+  // Alternate the two source photos; do not crop their portrait framing.
+  const app = document.getElementById('app');
+  const originals = Array.from(app.querySelectorAll('.slide'));
+  const photos = originals.filter(slide => slide.classList.contains('photo-slide'))
+    .map(slide => slide.querySelector('.memorial-photo')?.getAttribute('src'))
+    .filter(Boolean);
+  if (photos.length === 2) {
+    originals.forEach((slide, i) => {
+      const src = photos[(i + 1) % photos.length];
+      const interlude = document.createElement('section');
+      interlude.className = 'slide full-photo-slide';
+      interlude.setAttribute('aria-label', 'عکس یادبود علیرضا ناظری');
+      const background = document.createElement('img');
+      background.className = 'full-photo-backdrop';
+      background.alt = '';
+      background.src = src;
+      const foreground = document.createElement('img');
+      foreground.className = 'full-photo-image';
+      foreground.alt = 'تصویر زنده‌یاد علیرضا ناظری';
+      foreground.src = src;
+      interlude.append(background, foreground);
+      slide.insertAdjacentElement('afterend', interlude);
+    });
+  }
   const slides = Array.from(document.querySelectorAll('.slide'));
   const progress = document.getElementById('progress');
   const hud = document.getElementById('hud');
